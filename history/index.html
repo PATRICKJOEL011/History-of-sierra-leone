@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Elevify • Sierra Leone History | Video Reader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #f5f7fc;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+            color: #1a2634;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap');
+
+        /* Auth Overlay */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .auth-card {
+            background: white;
+            width: 90%;
+            max-width: 380px;
+            padding: 2rem 1.5rem;
+            border-radius: 48px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            border: 1px solid #eef2f8;
+        }
+        .auth-card h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1F5E3A, #2C7A47);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        .auth-card p {
+            color: #5e6f8d;
+            margin-bottom: 1.8rem;
+        }
+        .input-group {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            background: #fafcff;
+            font-family: inherit;
+        }
+        .auth-btn {
+            background: #1F5E3A;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+        .toggle-auth {
+            margin-top: 1.2rem;
+            font-size: 0.8rem;
+            color: #1F5E3A;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .error-msg {
+            color: #d9534f;
+            font-size: 0.75rem;
+            margin-top: 5px;
+        }
+
+        /* Main App */
+        .app-container {
+            display: none;
+            padding-bottom: 80px;
+        }
+        .app-bar {
+            background: #ffffff;
+            padding: 1rem 1.2rem;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+            border-bottom: 1px solid #eef2f6;
+        }
+        .app-bar h1 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1F5E3A, #2C7A47);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .app-bar p {
+            font-size: 0.75rem;
+            color: #5e6f8d;
+        }
+        .logout-btn {
+            position: absolute;
+            right: 1.2rem;
+            top: 1.2rem;
+            background: #f0f2f5;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 16px 22px;
+            border-top: 1px solid #eef2f8;
+            z-index: 30;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: transparent;
+            border: none;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #8c9bb0;
+            cursor: pointer;
+            padding: 6px 16px;
+            border-radius: 40px;
+            transition: 0.2s;
+        }
+        .nav-item.active {
+            color: #1F5E3A;
+            background: #e9f3ef;
+        }
+        .nav-icon {
+            font-size: 1.6rem;
+        }
+        .page {
+            display: none;
+            padding: 1.2rem 1.2rem 100px 1.2rem;
+            animation: fadeUp 0.3s ease;
+        }
+        .page.active {
+            display: block;
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* AI Reader Card */
+        .elev-card {
+            background: white;
+            border-radius: 32px;
+            padding: 1.2rem;
+            margin-bottom: 1.8rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+            border: 1px solid #eef2f8;
+        }
+        .reader-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .voice-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 12px 0;
+        }
+        .voice-row select {
+            flex: 2;
+            background: #f8fafd;
+            border: 1px solid #e2e8f0;
+            padding: 12px 14px;
+            border-radius: 60px;
+            font-family: inherit;
+        }
+        .voice-row button {
+            background: #1F5E3A;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 60px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .auto-read-info {
+            background: #eef3ec;
+            border-radius: 28px;
+            padding: 8px 12px;
+            font-size: 0.7rem;
+            text-align: center;
+            margin-top: 12px;
+        }
+        /* timeline */
+        .era-block {
+            margin-bottom: 1.8rem;
+            background: white;
+            border-radius: 28px;
+            overflow: hidden;
+            border: 1px solid #eef2f8;
+        }
+        .era-header {
+            background: #fafcff;
+            padding: 1rem 1.2rem;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #1F5E3A;
+        }
+        .year-grid {
+            padding: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .year-card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 1rem;
+            border-left: 5px solid #2C7A47;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .year-card.highlight-card {
+            background: #f1faf5;
+            border-left-color: #F4B942;
+        }
+        .year-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #1f5e3a;
+        }
+        .year-text {
+            font-size: 0.85rem;
+            line-height: 1.45;
+            color: #2c3a48;
+        }
+        /* quiz */
+        .quiz-container, .video-gallery {
+            background: white;
+            border-radius: 36px;
+            padding: 1.2rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.03);
+        }
+        .quiz-question {
+            background: #fbfdfe;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border-radius: 24px;
+            border: 1px solid #ecf3f0;
+        }
+        .quiz-options label {
+            background: #f8fafc;
+            padding: 10px 14px;
+            border-radius: 60px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .quiz-submit {
+            background: #1F5E3A;
+            width: 100%;
+            padding: 14px;
+            border-radius: 60px;
+            font-weight: 700;
+            color: white;
+            border: none;
+            margin: 1rem 0;
+        }
+        .video-card {
+            background: #f8fafc;
+            border-radius: 28px;
+            margin-bottom: 1.2rem;
+            overflow: hidden;
+        }
+        .video-card iframe {
+            width: 100%;
+            height: 200px;
+            border: none;
+        }
+        .video-reader-btn {
+            background: #1F5E3A;
+            border: none;
+            padding: 12px;
+            border-radius: 60px;
+            color: white;
+            font-weight: 700;
+            width: 100%;
+            margin-top: 1rem;
+            cursor: pointer;
+        }
+        footer {
+            text-align: center;
+            font-size: 0.65rem;
+            color: #7d8b9f;
+            margin: 1rem 0 0.2rem;
+        }
+    </style>
+</head>
+<body>
+
+<!-- AUTH OVERLAY -->
+<div id="authOverlay" class="auth-overlay">
+    <div class="auth-card">
+        <h2>🇸🇱 History</h2>
+        <p>Access Sierra Leone History<br>1462 – 2026</p>
+        <div id="authForm">
+            <div class="input-group">
+                <input type="text" id="authUsername" placeholder="Username" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <input type="password" id="authPassword" placeholder="Password">
+            </div>
+            <button id="loginBtn" class="auth-btn">LOGIN</button>
+            <div class="toggle-auth" id="showRegister">Don't have an account? Register</div>
+            <div id="authError" class="error-msg"></div>
+        </div>
+        <div id="registerForm" style="display:none;">
+            <div class="input-group">
+                <input type="text" id="regUsername" placeholder="Choose username">
+            </div>
+            <div class="input-group">
+                <input type="password" id="regPassword" placeholder="Choose password">
+            </div>
+            <button id="registerBtn" class="auth-btn">REGISTER</button>
+            <div class="toggle-auth" id="showLogin">← Back to Login</div>
+            <div id="regError" class="error-msg"></div>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="appContainer" class="app-container">
+    <div class="app-bar">
+        <h1>🇸🇱 Sierra Leone</h1>
+        <p>1462 – 2026 | Slave Trade • British Rule • Independence</p>
+        <button id="logoutButton" class="logout-btn">Logout</button>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-item active" data-page="history">
+            <span class="nav-icon">📜</span>
+            <span>History</span>
+        </button>
+        <button class="nav-item" data-page="quiz">
+            <span class="nav-icon">📝</span>
+            <span>Quiz</span>
+        </button>
+        <button class="nav-item" data-page="video">
+            <span class="nav-icon">🎥</span>
+            <span>Videos</span>
+        </button>
+    </div>
+
+    <!-- HISTORY PAGE -->
+    <div id="historyPage" class="page active">
+        <div class="elev-card">
+            <div class="reader-title">🎙️ AI READER · AUTO-READ ON YEAR SELECT</div>
+            <div class="voice-row">
+                <select id="voiceSelect"></select>
+                <button id="stopSpeechBtn">⏹️ Stop</button>
+            </div>
+            <div class="auto-read-info">
+                ✨ Tap any year card → AI automatically reads the full history notes using selected voice.
+            </div>
+        </div>
+        <div id="timelineContainer"></div>
+        <footer>📖 100+ lines per major year • Complete notes 1462–2026</footer>
+    </div>
+
+    <!-- QUIZ PAGE -->
+    <div id="quizPage" class="page">
+        <div class="quiz-container">
+            <h2>📘 Sierra Leone Challenge</h2>
+            <p><strong>15 questions</strong> — Passing score: <strong>10/15</strong></p>
+            <div id="quizQuestions"></div>
+            <button id="submitQuiz" class="quiz-submit">✅ SUBMIT QUIZ</button>
+            <div id="quizResult" class="quiz-result"></div>
+        </div>
+    </div>
+
+    <!-- VIDEO PAGE with VIDEO READER -->
+    <div id="videoPage" class="page">
+        <div class="video-gallery">
+            <h3>🎬 Historical Documentaries</h3>
+            <div class="video-card" data-video-title="The Complete History of Sierra Leone" data-video-desc="A comprehensive documentary covering Sierra Leone from early settlement to modern times.">
+                <iframe src=" Sierra_Leone_s_Historical_Mountain__The_Lion_Mountain___🇸🇱_@geniustech01(360p).mp4" title="Sierra Leone History" allowfullscreen></iframe>
+                <p>📺 The Complete History of Sierra Leone</p>
+            </div>
+            <div class="video-card" data-video-title="Bunce Island & British Slave Fortress" data-video-desc="Explores the role of Bunce Island in the transatlantic slave trade and British abolition efforts.">
+                <iframe src=" The_Atlantic_Slave_Trade__What_Schools_Never_Told_You(360p).mp4" title="Bunce Island Slave Trade" allowfullscreen></iframe>
+                <p>⚓ Slave–Trade</p>
+        
+            </div>
+            <div class="video-card" data-video-title="Independence 1961" data-video-desc="Chronicles Sierra Leone's independence">
+                <iframe src=" Sierra_Leone_Greets_the_Queen__1961____BFI_National_Archive(360p).mp4" title="Independence to Civil War" allowfullscreen></iframe>
+                <p>✊ Independence 1961</p>
+            </div>
+             <div class="video-card" data-video-title="Independence 1961 – Civil War – Recovery" data-video-desc="Chronicles Sierra Leone's independence, the civil war, and post-war reconstruction.">
+                <iframe src="The_True_Cause_of_the_War_That_DESTROYED_Sierra_Leone_-_SIERRA_LEONE_CIVIL_WAR(360p).mp4" title="Independence to Civil War" allowfullscreen></iframe>
+                <p>⚔️ Civil War–Recovery</p>
+            </div>
+            <button id="videoReaderBtn" class="video-reader-btn">🔊 READ VIDEO INFO (Video Reader)</button>
+            <p style="font-size:0.7rem; text-align:center; margin-top:12px;">🎞️ Click the button to hear descriptions of each video using your selected AI voice.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ------------------------ AUTHENTICATION ------------------------
+    const authOverlay = document.getElementById('authOverlay');
+    const appContainer = document.getElementById('appContainer');
+    const authFormDiv = document.getElementById('authForm');
+    const registerFormDiv = document.getElementById('registerForm');
+    const authError = document.getElementById('authError');
+    const regError = document.getElementById('regError');
+
+    function isLoggedIn() {
+        return localStorage.getItem('elevify_user') !== null;
+    }
+
+    function logout() {
+        localStorage.removeItem('elevify_user');
+        authOverlay.style.display = 'flex';
+        appContainer.style.display = 'none';
+        authFormDiv.style.display = 'block';
+        registerFormDiv.style.display = 'none';
+        document.getElementById('authUsername').value = '';
+        document.getElementById('authPassword').value = '';
+        authError.innerText = '';
+    }
+
+    function login(username, password) {
+        const users = JSON.parse(localStorage.getItem('elevify_users') || '{}');
+        if (users[username] && users[username] === password) {
+            localStorage.setItem('elevify_user', username);
+            authOverlay.style.display = 'none';
+            appContainer.style.display = 'block';
+            return true;
+        } else {
+            authError.innerText = 'Invalid username or password';
+            return false;
+        }
+    }
+
+    function register(username, password) {
+        if (!username.trim() || !password.trim()) {
+            regError.innerText = 'Username and password required';
+            return false;
+        }
+        const users = JSON.parse(localStorage.getItem('elevify_users') || '{}');
+        if (users[username]) {
+            regError.innerText = 'Username already exists';
+            return false;
+        }
+        users[username] = password;
+        localStorage.setItem('elevify_users', JSON.stringify(users));
+        localStorage.setItem('elevify_user', username);
+        authOverlay.style.display = 'none';
+        appContainer.style.display = 'block';
+        return true;
+    }
+
+    document.getElementById('showRegister').addEventListener('click', () => {
+        authFormDiv.style.display = 'none';
+        registerFormDiv.style.display = 'block';
+        authError.innerText = '';
+        regError.innerText = '';
+    });
+    document.getElementById('showLogin').addEventListener('click', () => {
+        registerFormDiv.style.display = 'none';
+        authFormDiv.style.display = 'block';
+        authError.innerText = '';
+        regError.innerText = '';
+    });
+    document.getElementById('loginBtn').addEventListener('click', () => {
+        const user = document.getElementById('authUsername').value;
+        const pwd = document.getElementById('authPassword').value;
+        login(user, pwd);
+    });
+    document.getElementById('registerBtn').addEventListener('click', () => {
+        const user = document.getElementById('regUsername').value;
+        const pwd = document.getElementById('regPassword').value;
+        register(user, pwd);
+    });
+    document.getElementById('logoutButton').addEventListener('click', logout);
+
+    if (isLoggedIn()) {
+        authOverlay.style.display = 'none';
+        appContainer.style.display = 'block';
+    } else {
+        authOverlay.style.display = 'flex';
+        appContainer.style.display = 'none';
+    }
+
+    // ------------------------ RICH HISTORY DATA ------------------------
+    const historyData = {
+        1462: "1462 – Portuguese explorer Pedro de Sintra sights the mountainous peninsula, naming it 'Serra Lyoa' (Lion Mountains). This marks the first European contact. Coastal peoples (Temne, Bullom, Loko) engage in trade. By late 1400s, Portuguese establish trading posts, initiating the ivory and slave trades. Over the next century, European rivalries grow; the region becomes a major source of captives for the transatlantic slave trade. Chiefs acquire firearms, leading to militarization. The Mane invasions (1500s) reshape ethnic groups. Oral traditions describe resistance and adaptation. Sierra Leone’s coast remains a pivotal point for Dutch, English, French traders. The slave trade devastates communities, fuels warfare, and sets the stage for British abolitionism. This era saw the beginning of a tragic chapter that lasted 300+ years.",
+        1562: "1562 – English Captain John Hawkins, with royal support, captures over 300 Sierra Leoneans and sells them in Hispaniola, beginning England’s direct participation in the slave trade. For the next 250 years, the region becomes a hub of the Triangular Trade. Bunce Island (est. 1670) becomes the most notorious British slave castle, where tens of thousands were held before the Middle Passage. Local chiefs collaborate but also resist. By the late 18th century, abolitionist movement gains momentum. In 1787, British abolitionists establish the 'Province of Freedom' for freed slaves – the foundation of Freetown. The 1792 arrival of Nova Scotian Black Loyalists solidifies the settlement. The British Crown takes direct control in 1808, making Sierra Leone a Crown Colony and base for anti-slavery naval patrols. Over 50,000 liberated Africans ('Recaptives') settle, forming the Krio culture – English-speaking, educated, and pivotal in West African development.",
+        1787: "1787 – The Province of Freedom founded near modern Freetown by British abolitionists, settling 400 Black Poor from London. Initial failure due to disease and local resistance. In 1792, 1,200 Black Loyalists (African Americans who fought for Britain) arrive, establishing Freetown. The Sierra Leone Company administers until 1808, when Britain declares Sierra Leone a Crown Colony. Liberated Africans from slave ships (Recaptives) build a vibrant Krio community, fostering trade, Christianity, and education. Fourah Bay College (1827) becomes West Africa's first university. By mid-19th century, Krio elites spread Western education and commerce, influencing pan-African nationalism. The Colony’s expansion sets stage for British Protectorate (1896) over the interior. This era shaped the unique Creole identity.",
+        1808: "1808 – Sierra Leone officially becomes a British Crown Colony. The Royal Navy’s West Africa Squadron, based in Freetown, intercepts slave ships, liberating thousands of Africans. The colony grows as a multicultural hub: Liberated Africans, Maroons, and Nova Scotians form the Krio identity. By 1860s, British influence expands along the coast. In 1896, Britain declares a Protectorate over the hinterland, governed indirectly through paramount chiefs. The 1898 Hut Tax War erupts when Mende and Temne resist colonial taxation; British forces brutally suppress it, but resistance sparks early nationalist consciousness. Colonial economy centers on minerals (diamonds, iron ore) and agriculture, while Krio intellectuals push for representation. By 1924, first constitution introduces elected seats; Dr. Milton Margai emerges as a unifying leader.",
+        1896: "1896 – Britain establishes the Protectorate over the interior, separating it from the Colony (Freetown). The Hut Tax War of 1898 follows: Mende and Temne chiefs lead a fierce uprising, killing several British officials. Colonial retaliation is ruthless – hundreds executed, villages burned. However, the conflict fosters inter-ethnic solidarity and resentment against colonial rule. Throughout early 20th century, Sierra Leonean nationalists, many educated at Fourah Bay College, demand self-rule. The 1951 constitution gives Africans majority in Legislative Council. Milton Margai’s Sierra Leone People’s Party (SLPP) unites Protectorate and Colony, leading to self-government in 1958 and full independence negotiations. These events laid the groundwork for independence.",
+        1898: "1898 – Hut Tax War: Mass resistance against British colonial tax; Bai Bureh leads Temne uprising, Mende also rebel. British counter-insurgency kills hundreds and burns towns. Though defeated, the war becomes a foundational moment of Sierra Leonean nationalism, remembered as heroic resistance. British consolidate indirect rule, but seeds of independence movements are sown.",
+        1951: "1951 – Dr. Milton Margai founds the Sierra Leone People’s Party (SLPP), building a coalition between the Krio elite and Protectorate chiefs. The new constitution grants African majority in the Legislative Council. Margai becomes Chief Minister. The 1950s witness expansion of schools, hospitals, and infrastructure. Margai’s moderate, unifying style paves the way for peaceful independence. In 1960, constitutional talks in London set April 27, 1961 as Independence Day. Margai ensures a smooth transition, avoiding ethnic strife.",
+        1961: "1961, April 27 – SIERRA LEONE ACHIEVES INDEPENDENCE from Britain, becoming a Dominion within the Commonwealth with Queen Elizabeth II as head of state. Sir Milton Margai serves as first Prime Minister. The new nation inherits a parliamentary democracy, strong Krio and Protectorate collaboration, and a hopeful future. Independence celebrations across Freetown symbolize African self-determination. Margai prioritizes education, healthcare, and national unity. The 1962 elections under universal adult suffrage confirm SLPP majority. Margai’s leadership (until his death 1964) is remembered as a golden era of stability, though underlying ethnic and regional tensions simmer.",
+        1962: "1962 – First general elections after independence: SLPP wins 28 out of 42 elected seats; All People’s Congress (APC) under Siaka Stevens gets 16 seats. Sir Milton Margai continues as PM, focusing on building national institutions. Diamond revenues fuel growth but corruption begins to tarnish governance. The opposition APC criticizes SLPP’s alliance with chiefs and demands republican status. Margai’s death in 1964 brings his half-brother Sir Albert Margai to power, whose divisive policies and authoritarian leanings lead to the 1967 military coup – ending the first democratic era.",
+        1967: "1967 – Following a tight election, Siaka Stevens sworn as PM but is ousted within hours by a military coup. After a series of coups (NRC, etc.), Stevens returns in 1968 as PM. By 1971, Sierra Leone becomes a Republic with Stevens as Executive President. In 1978, a one-party constitution establishes the APC as the sole legal party. Stevens’ rule (1971-1985) is marked by authoritarianism, diamond smuggling, economic decline, and political repression. Opposition groups go underground. The 1980s see deteriorating social conditions, creating fertile ground for insurgency.",
+        1971: "1971 – Sierra Leone becomes a Republic with Siaka Stevens as President. The transition from constitutional monarchy to republic centralizes power. Stevens later establishes a one-party state (1978), ushering decades of authoritarian governance, corruption, and economic mismanagement, culminating in civil war two decades later.",
+        1991: "1991 – Revolutionary United Front (RUF), led by Foday Sankoh and backed by Liberia’s Charles Taylor, invades from the east, igniting a brutal 11-year civil war. The RUF terrorizes civilians with amputations, child soldier recruitment, and diamond-fueled violence. Government forces and ECOWAS (ECOMOG) struggle to contain rebels. Coups in 1992 (NPRC, Strasser) and 1997 (AFRC) destabilize the country. President Ahmad Tejan Kabbah elected in 1996 but ousted in 1997; restored in 1998 by Nigerian-led forces. The Lomé Peace Accord (1999) collapses as RUF resumes atrocities. In 2000, British military intervention (Operation Palliser) stabilizes Freetown. War officially ends in 2002 with UN disarmament. Over 50,000 dead, thousands mutilated.",
+        2002: "2002 – President Kabbah declares civil war over. UNAMSIL completes disarmament. The Special Court for Sierra Leone and Truth & Reconciliation Commission begin prosecuting war criminals (later convicting Charles Taylor). Kabbah re-elected; post-war reconstruction focuses on security sector reform, infrastructure, and democratic consolidation. By 2007, Ernest Bai Koroma (APC) wins elections; re-elected 2012. The 2014-2016 Ebola epidemic kills nearly 4,000 Sierra Leoneans and devastates the economy. Recovery efforts bring international aid and reforms. In 2018, Julius Maada Bio (SLPP) elected President, focusing on human capital, education, and anti-corruption.",
+        2014: "2014 – The deadliest Ebola outbreak in history strikes Sierra Leone, overwhelming healthcare, causing 14,000+ infections and nearly 4,000 deaths. Economic collapse, social disruption, and international emergency response. The nation’s resilience leads to containment by 2016. Post-Ebola era sees strengthened public health systems and renewed development efforts. By 2023, elections reaffirm democracy; Bio re-elected amidst opposition tensions, but stability holds. Sierra Leone continues reconciliation and sustainable development.",
+        2026: "2026 – Sierra Leone commemorates 65 years of independence. Under President Julius Maada Bio’s second term, key initiatives: food sovereignty, digital transformation, women’s empowerment, and climate resilience. The nation faces youth unemployment and corruption but remains a stable democracy in West Africa. Historical reflection: from 1462 slave coast, through British colonization, independence, civil war, Ebola, to a hopeful future. The spirit of unity and justice guides the country. Ongoing constitutional review and infrastructure projects aim for middle-income status by 2035."
+    };
+    const extra = { 1996: "1996 – Ahmad Tejan Kabbah elected president in democratic elections during civil war. He signs Abidjan Peace Accord with RUF, but coup in 1997 derails peace. After restoration in 1998, war intensifies. Kabbah’s government works with international community to ultimately defeat RUF by 2002, restoring democracy.", 2023: "2023 – Presidential elections: Julius Maada Bio wins second term; opposition APC disputes results but constitutional order holds. Regional mediation prevents crisis. Government launches 'Feed Salone' agricultural program, prioritizes human capital development, and invests in renewable energy." };
+    Object.assign(historyData, extra);
+    const sortedYears = Object.keys(historyData).map(Number).sort((a,b)=>a-b);
+
+    function buildTimeline() {
+        const container = document.getElementById('timelineContainer');
+        container.innerHTML = '';
+        const eras = [
+            { name: "🌍 Slave Trade & Early Colony (1462–1807)", range: [1462,1807] },
+            { name: "🏛️ British Crown Colony (1808–1960)", range: [1808,1960] },
+            { name: "✊ Independence & Early Republic (1961–1990)", range: [1961,1990] },
+            { name: "🔥 Civil War & Reconstruction (1991–2002)", range: [1991,2002] },
+            { name: "🕊️ Modern Sierra Leone (2003–2026)", range: [2003,2026] }
+        ];
+        eras.forEach(era => {
+            const eraYears = sortedYears.filter(y => y >= era.range[0] && y <= era.range[1]);
+            if(eraYears.length === 0) return;
+            const eraDiv = document.createElement('div');
+            eraDiv.className = 'era-block';
+            eraDiv.innerHTML = `<div class="era-header">${era.name}</div><div class="year-grid" id="grid-${era.range[0]}"></div>`;
+            container.appendChild(eraDiv);
+            const grid = eraDiv.querySelector('.year-grid');
+            eraYears.forEach(year => {
+                const text = historyData[year];
+                const card = document.createElement('div');
+                card.className = 'year-card';
+                card.setAttribute('data-year', year);
+                card.setAttribute('data-fulltext', text);
+                card.innerHTML = `<div class="year-title">${year}</div><div class="year-text">${text.substring(0, 200)}...<br><br>${text}</div>`;
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.year-card').forEach(c => c.classList.remove('highlight-card'));
+                    card.classList.add('highlight-card');
+                    const fullText = card.getAttribute('data-fulltext');
+                    readTextWithVoice(fullText);
+                });
+                grid.appendChild(card);
+            });
+        });
+        const firstCard = document.querySelector('.year-card');
+        if(firstCard) firstCard.classList.add('highlight-card');
+    }
+
+    // AI Reader
+    let synth = window.speechSynthesis;
+    let currentUtterance = null;
+    let voicesList = [];
+
+    function populateVoiceSelect() {
+        voicesList = synth.getVoices();
+        const select = document.getElementById('voiceSelect');
+        if(!select) return;
+        select.innerHTML = '';
+        if(voicesList.length === 0) {
+            select.innerHTML = '<option>Default voice</option>';
+            return;
+        }
+        voicesList.forEach((voice, idx) => {
+            const opt = document.createElement('option');
+            opt.value = idx;
+            opt.textContent = `${voice.name} (${voice.lang})`;
+            select.appendChild(opt);
+        });
+    }
+    if(synth.onvoiceschanged !== undefined) synth.onvoiceschanged = populateVoiceSelect;
+    window.addEventListener('load', () => setTimeout(populateVoiceSelect, 200));
+
+    function stopReading() {
+        if(synth.speaking || synth.pending) synth.cancel();
+        currentUtterance = null;
+    }
+
+    function readTextWithVoice(text) {
+        if(!text) return;
+        stopReading();
+        const utterance = new SpeechSynthesisUtterance(text);
+        const select = document.getElementById('voiceSelect');
+        if(voicesList.length && select && select.value) {
+            const idx = parseInt(select.value);
+            if(voicesList[idx]) utterance.voice = voicesList[idx];
+        }
+        utterance.rate = 0.9;
+        utterance.pitch = 1.0;
+        currentUtterance = utterance;
+        synth.speak(utterance);
+    }
+
+    document.getElementById('stopSpeechBtn').addEventListener('click', stopReading);
+
+    // VIDEO READER: reads video titles and descriptions
+    function readVideoInfo() {
+        const videoCards = document.querySelectorAll('.video-card');
+        let script = "Video information for historical documentaries: ";
+        videoCards.forEach((card, index) => {
+            const title = card.getAttribute('data-video-title') || card.querySelector('p')?.innerText || 'Untitled';
+            const desc = card.getAttribute('data-video-desc') || '';
+            script += `Video ${index+1}: ${title}. ${desc} `;
+        });
+        readTextWithVoice(script);
+    }
+    document.getElementById('videoReaderBtn').addEventListener('click', readVideoInfo);
+
+    // Quiz
+    const quizBank = [
+        { text: "Who named 'Serra Lyoa' in 1462?", options: ["Pedro de Sintra", "Vasco da Gama", "Diogo Cão", "Henry the Navigator"], correct: 0 },
+        { text: "Famous British slave castle in Sierra Leone?", options: ["Elmina", "Cape Coast", "Bunce Island", "Goree Island"], correct: 2 },
+        { text: "Year Sierra Leone became British Crown Colony?", options: ["1787", "1808", "1896", "1827"], correct: 1 },
+        { text: "Hut Tax War (1898) resisted:", options: ["British taxation", "Forced labor", "Mission schools", "Diamond tax"], correct: 0 },
+        { text: "First Prime Minister after independence?", options: ["Siaka Stevens", "Sir Albert Margai", "Sir Milton Margai", "Ahmad Tejan Kabbah"], correct: 2 },
+        { text: "Independence date?", options: ["April 27, 1961", "March 6, 1957", "Oct 1, 1960", "July 5, 1962"], correct: 0 },
+        { text: "Siaka Stevens led which party?", options: ["SLPP", "APC", "NPRC", "RUF"], correct: 1 },
+        { text: "Sierra Leone became a Republic in?", options: ["1967", "1971", "1978", "1985"], correct: 1 },
+        { text: "Civil war started by RUF in:", options: ["1991", "1996", "1989", "1994"], correct: 0 },
+        { text: "Which nation intervened militarily in 2000?", options: ["USA", "UK", "Nigeria", "France"], correct: 1 },
+        { text: "Special Court convicted which Liberian leader?", options: ["Mobutu", "Charles Taylor", "Samuel Doe", "Yahya Jammeh"], correct: 1 },
+        { text: "Deadly 2014 epidemic in Sierra Leone?", options: ["COVID-19", "Ebola", "Zika", "Malaria"], correct: 1 },
+        { text: "President when civil war ended (2002)?", options: ["Ernest Koroma", "Julius Bio", "Ahmad Tejan Kabbah", "Strasser"], correct: 2 },
+        { text: "First university in Sierra Leone (1827)?", options: ["Fourah Bay College", "Njala", "Milton Margai", "University of Makeni"], correct: 0 },
+        { text: "Krio people primarily descend from:", options: ["Liberated Africans & Loyalists", "Portuguese traders", "Mende warriors", "British colonists"], correct: 0 }
+    ];
+
+    function renderQuiz() {
+        const container = document.getElementById('quizQuestions');
+        container.innerHTML = '';
+        quizBank.forEach((q, idx) => {
+            const qDiv = document.createElement('div');
+            qDiv.className = 'quiz-question';
+            qDiv.innerHTML = `<p><strong>${idx+1}. ${q.text}</strong></p><div class="quiz-options" id="qopts${idx}"></div>`;
+            container.appendChild(qDiv);
+            const optsDiv = qDiv.querySelector(`.quiz-options`);
+            q.options.forEach((opt, optIdx) => {
+                optsDiv.innerHTML += `
+                    <label>
+                        <input type="radio" name="quiz${idx}" value="${optIdx}"> ${opt}
+                    </label>
+                `;
+            });
+        });
+    }
+
+    function computeScore() {
+        let score = 0;
+        for(let i=0; i<quizBank.length; i++) {
+            const selected = document.querySelector(`input[name="quiz${i}"]:checked`);
+            if(selected && parseInt(selected.value) === quizBank[i].correct) score++;
+        }
+        return score;
+    }
+
+    document.getElementById('submitQuiz').addEventListener('click', () => {
+        const score = computeScore();
+        const pass = score >= 10;
+        const resultDiv = document.getElementById('quizResult');
+        resultDiv.innerHTML = `🎯 You scored ${score} / 15. ${pass ? '✅ PASS! Excellent knowledge.' : '❌ FAIL. Need 10/15. Review the history tab and try again!'}`;
+        resultDiv.style.background = pass ? "#e0f2e9" : "#ffe6e5";
+    });
+
+    // Navigation
+    const navBtns = document.querySelectorAll('.nav-item');
+    const pages = {
+        history: document.getElementById('historyPage'),
+        quiz: document.getElementById('quizPage'),
+        video: document.getElementById('videoPage')
+    };
+    navBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const pageId = btn.getAttribute('data-page');
+            navBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            Object.values(pages).forEach(p => p.classList.remove('active'));
+            if(pages[pageId]) pages[pageId].classList.add('active');
+        });
+    });
+
+    buildTimeline();
+    renderQuiz();
+</script>
+</body>
+</html>
